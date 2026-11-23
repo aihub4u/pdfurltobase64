@@ -62,7 +62,8 @@ curl -X POST http://localhost:3000/api/pdf-to-base64 \
 |---|---|---|
 | `PORT` | 3000 | Port to listen on |
 | `MAX_PDF_BYTES` | 20971520 (20 MB) | Max PDF size |
-| `FETCH_TIMEOUT_MS` | 20000 | Timeout for downloading the PDF |
+| `FETCH_TIMEOUT_MS` | 30000 | Overall timeout for downloading the PDF |
+| `CONNECT_TIMEOUT_MS` | 8000 | Connect timeout per IP address (the API tries each IPv4, then IPv6, address of the host) |
 | `API_KEY` | _(empty)_ | If set, requests must send `x-api-key: <value>` |
 
 ## Deploy on Render
