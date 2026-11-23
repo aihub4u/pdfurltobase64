@@ -101,8 +101,25 @@ async function fetchPdf(rawUrl, redirectsLeft = 5) {
 
     return { buffer, fileName: fileNameFrom(url, res.headers) };
   } catch (err) {
-    if (err.name === "AbortError" && !err.status) throw httpError(504, "Timed out fetching the PDF");
-    throw err;
+    if (err.status) throw err;
+    if (err.name === "AbortError") throw httpError(504, "Timed out fetching the PDF");
+    // Node's fetch hides the real network error in err.cause
+    const cause = err.cause || {};
+    const code = cause.code || cause.name || "";
+    const reasons = {
+      UND_ERR_CONNECT_TIMEOUT: "Could not connect to the source host (connection timed out - it may block this server's IP)",
+      ECONNREFUSED: "Source host refused the connection",
+      ECONNRESET: "Source host closed the connection",
+      ETIMEDOUT: "Connection to the source host timed out",
+      EHOSTUNREACH: "Source host is unreachable",
+      ENOTFOUND: "Host not found",
+      CERT_HAS_EXPIRED: "Source host's SSL certificate has expired",
+      UNABLE_TO_VERIFY_LEAF_SIGNATURE: "Source host's SSL certificate chain is incomplete",
+      SELF_SIGNED_CERT_IN_CHAIN: "Source host uses a self-signed SSL certificate",
+      DEPTH_ZERO_SELF_SIGNED_CERT: "Source host uses a self-signed SSL certificate",
+    };
+    console.error("fetch failed:", code, cause.message || err.message);
+    throw httpError(502, reasons[code] || `Failed to fetch the PDF (${code || cause.message || err.message})`);
   } finally {
     clearTimeout(timer);
   }
